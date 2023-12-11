@@ -1,4 +1,6 @@
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -7,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class P2PFileTransfer {
+    private static final Logger logger = LogManager.getLogger();
     private static final int PORT = 44305;
     private final FileReceiver fileReceiver = new FileReceiver();
     private final FileSender fileSender = new FileSender();
@@ -44,6 +47,7 @@ public class P2PFileTransfer {
     }
 
     public Thread start() {
+        logger.info("Server is started");
         Thread serverThread = new Thread(() -> {
             while (!Thread.interrupted()) {
                 try {
@@ -62,11 +66,13 @@ public class P2PFileTransfer {
                 ServerSocket serverSocket = new ServerSocket(PORT);
                 Socket client = serverSocket.accept()
         ) {
+            logger.info("Server has got a connection");
             fileReceiver.receive(client);
         }
     }
 
     public void send(String address, Path path) {
+        logger.info("Client send a file");
         Thread sender = new Thread(() -> {
             try {
                 fileSender.send(address, path);
