@@ -11,7 +11,7 @@ import java.nio.file.Path;
 public class P2PFileTransfer {
     private static final Logger logger = LogManager.getLogger();
     private static final int PORT = 44305;
-    private final FileReceiver fileReceiver = new FileReceiver();
+    private final FileReceiver fileReceiver = new FileReceiver("received");
     private final FileSender fileSender = new FileSender();
     private static class FileSender {
         public void send(String address, Path path) throws IOException {
@@ -28,11 +28,18 @@ public class P2PFileTransfer {
     }
 
     private static class FileReceiver {
+        private final String receiveDirName;
+
+        public FileReceiver(String receiveDirName) {
+            this.receiveDirName = receiveDirName;
+        }
+
         public void receive(Socket clientSocket) throws IOException {
             try (
                     DataInputStream dis = new DataInputStream(clientSocket.getInputStream())
             ) {
-                Path filePath = Path.of("received", dis.readUTF());
+                initReceiveDir();
+                Path filePath = Path.of(receiveDirName, dis.readUTF());
                 long fileSize = dis.readLong();
                 byte[] buffer = new byte[4096];
                 try (OutputStream os = Files.newOutputStream(filePath)) {
@@ -43,6 +50,10 @@ public class P2PFileTransfer {
                     }
                 }
             }
+        }
+
+        private void initReceiveDir() throws IOException{
+            Files.createDirectories(Path.of(receiveDirName));
         }
     }
 
