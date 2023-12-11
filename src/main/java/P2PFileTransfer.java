@@ -7,10 +7,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class P2PFileTransfer {
-    private final int PORT = 44305;
+    private static final int PORT = 44305;
     private final FileReceiver fileReceiver = new FileReceiver();
     private final FileSender fileSender = new FileSender();
-    private class FileSender {
+    private static class FileSender {
         public void send(String address, Path path) throws IOException {
             try (
                     InputStream is = Files.newInputStream(path);
@@ -24,7 +24,7 @@ public class P2PFileTransfer {
         }
     }
 
-    private class FileReceiver {
+    private static class FileReceiver {
         public void receive(Socket clientSocket) throws IOException {
             try (
                     DataInputStream dis = new DataInputStream(clientSocket.getInputStream())
@@ -43,19 +43,21 @@ public class P2PFileTransfer {
         }
     }
 
-
-    public P2PFileTransfer() throws IOException {
-
-    }
-
-    public void start() throws IOException {
-        while (true) {
-            init();
-        }
+    public Thread start() {
+        Thread serverThread = new Thread(() -> {
+            while (!Thread.interrupted()) {
+                try {
+                    init();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+        serverThread.start();
+        return serverThread;
     }
 
     public void init() throws IOException {
-        System.out.println("New init");
         try (
                 ServerSocket serverSocket = new ServerSocket(PORT);
                 Socket client = serverSocket.accept()
@@ -64,7 +66,13 @@ public class P2PFileTransfer {
         }
     }
 
-    public void send(String address, Path path) throws IOException {
-        fileSender.send(address, path);
+    public void send(String address, Path path) {
+        Thread sender = new Thread(() -> {
+            try {
+                fileSender.send(address, path);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 }
