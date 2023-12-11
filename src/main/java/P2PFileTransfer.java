@@ -71,7 +71,7 @@ public class P2PFileTransfer {
         }
     }
 
-    public void send(String address, Path path) {
+    public Thread send(String address, Path path) {
         logger.info("Client send a file");
         Thread sender = new Thread(() -> {
             try {
@@ -80,5 +80,7 @@ public class P2PFileTransfer {
                 throw new RuntimeException(e);
             }
         });
+        sender.start();
+        return sender;
     }
 }
